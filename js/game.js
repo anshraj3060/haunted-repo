@@ -3,6 +3,77 @@ const gameState = {
   defeated: [],
   hintsUsed: {},
 };
+let activeRepoKey = "";
+
+function clearGameProgress() {
+  gameState.xp = 0;
+  gameState.defeated = [];
+  gameState.hintsUsed = {};
+}
+
+function loadGameState(repoName) {
+  const parts = String(repoName || "")
+    .trim()
+    .replace(/^https?:\/\/(www\.)?github\.com\//i, "")
+    .split(/[?#]/)[0]
+    .split("/")
+    .filter(Boolean);
+
+  activeRepoKey = parts.length >= 2
+    ? `${parts[0].toLowerCase()}/${parts[1].replace(/\.git$/i, "").toLowerCase()}`
+    : "";
+  clearGameProgress();
+
+  if (!activeRepoKey) {
+    return;
+  }
+
+  try {
+    const saved = localStorage.getItem(`haunted-repo:${activeRepoKey}`);
+    if (!saved) {
+      return;
+    }
+
+    const parsed = JSON.parse(saved);
+    if (Number.isFinite(parsed.xp) && parsed.xp >= 0) {
+      gameState.xp = parsed.xp;
+    }
+    if (Array.isArray(parsed.defeated)) {
+      gameState.defeated = [...new Set(parsed.defeated.map(String))];
+    }
+    if (parsed.hintsUsed && typeof parsed.hintsUsed === "object" && !Array.isArray(parsed.hintsUsed)) {
+      gameState.hintsUsed = Object.fromEntries(
+        Object.entries(parsed.hintsUsed).map(([id, level]) => [
+          id,
+          Math.min(3, Math.max(0, Math.floor(Number(level) || 0))),
+        ])
+      );
+    }
+  } catch {
+    clearGameProgress();
+  }
+}
+
+function saveGameState() {
+  if (!activeRepoKey) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(`haunted-repo:${activeRepoKey}`, JSON.stringify({
+      xp: gameState.xp,
+      defeated: gameState.defeated,
+      hintsUsed: gameState.hintsUsed,
+    }));
+  } catch {
+    // Storage may be unavailable in private browsing.
+  }
+}
+
+function resetGameState() {
+  clearGameProgress();
+  saveGameState();
+}
 
 const gameRanks = [
   { name: "Rookie Ghost", xp: 0 },
@@ -26,6 +97,7 @@ function recordHintUsed(issue, hintLevel) {
   const nextLevel = Math.min(3, Math.max(0, Math.floor(Number(hintLevel) || 0)));
   gameState.hintsUsed = gameState.hintsUsed || {};
   gameState.hintsUsed[issueId] = Math.max(getHintLevel(issue), nextLevel);
+  saveGameState();
   return gameState.hintsUsed[issueId];
 }
 
@@ -51,6 +123,7 @@ function defeatMonster(issue, monster) {
   const earnedXp = getXpReward(issue, monster);
   gameState.defeated.push(issueId);
   gameState.xp += earnedXp;
+  saveGameState();
   return earnedXp;
 }
 

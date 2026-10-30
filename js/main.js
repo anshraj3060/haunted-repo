@@ -63,7 +63,7 @@ function updateRankBar() {
     : "MAX RANK REACHED";
 }
 
-function createMonsterCard(issue, monster, isUnlocked, onDefeat) {
+function createMonsterCard(issue, monster) {
   const fullTitle = String(issue.title || "Untitled issue").trim().replace(/\s+/g, " ");
   const shortTitle = fullTitle.length > 64 ? `${fullTitle.slice(0, 61).trimEnd()}…` : fullTitle;
   const issueId = getIssueId(issue);
@@ -105,23 +105,12 @@ function createMonsterCard(issue, monster, isUnlocked, onDefeat) {
   xp.className = "monster-xp";
   xp.textContent = `${monster.xp} XP`;
 
-  const defeatButton = document.createElement("button");
-  defeatButton.className = "defeat-button";
-  defeatButton.type = "button";
-  defeatButton.disabled = isDefeated || !isUnlocked;
-  defeatButton.textContent = isDefeated
-    ? "DEFEATED"
-    : isUnlocked
-      ? `DEFEAT · +${monster.xp} XP`
-      : "LOCKED";
-  defeatButton.addEventListener("click", onDefeat);
-
   meta.append(level, xp);
-  card.append(number, emoji, name, title, weakness, meta, defeatButton);
+  card.append(number, emoji, name, title, weakness, meta);
   return card;
 }
 
-function createLevelSection(sectionInfo, groupedIssues, allIssues, copyEl, containerEl) {
+function createLevelSection(sectionInfo, groupedIssues, allIssues) {
   const { level, title } = sectionInfo;
   const unlocked = isLevelUnlocked(level, allIssues);
   const defeatedCount = countDefeatedInLevel(allIssues, level);
@@ -156,12 +145,7 @@ function createLevelSection(sectionInfo, groupedIssues, allIssues, copyEl, conta
     grid.setAttribute("role", "list");
 
     groupedIssues.forEach(({ issue, monster }) => {
-      const onDefeat = () => {
-        if (defeatMonster(issue, monster)) {
-          renderDungeonIssues(currentIssues, copyEl, containerEl);
-        }
-      };
-      grid.appendChild(createMonsterCard(issue, monster, unlocked, onDefeat));
+      grid.appendChild(createMonsterCard(issue, monster));
     });
 
     section.appendChild(grid);
@@ -208,7 +192,7 @@ function renderDungeonIssues(issues, copyEl, containerEl) {
 
   levelSections.forEach((sectionInfo) => {
     containerEl.appendChild(
-      createLevelSection(sectionInfo, groupedIssues[sectionInfo.level], issues, copyEl, containerEl)
+      createLevelSection(sectionInfo, groupedIssues[sectionInfo.level], issues)
     );
   });
 }
@@ -243,6 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const submitBtn = repoForm.querySelector('button[type="submit"]');
   const dungeonCopy = document.getElementById("dungeon-copy");
   const levelSectionsEl = document.getElementById("level-sections");
+  const resetGameButton = document.getElementById("reset-game");
 
   // Accept full GitHub URLs and owner/repo shorthand
   repoForm.noValidate = true;
@@ -273,6 +258,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       await ensureGithubLoaded();
+
+      if (requestId !== activeRequestId) {
+        return;
+      }
+
+      const { owner, repo } = parseRepoUrl(repoValue);
+      loadGameState(`${owner}/${repo}`);
+      updateRankBar();
       const issues = await fetchIssues(repoValue);
 
       if (requestId !== activeRequestId) {
@@ -302,5 +295,10 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener("click", () => {
       showScreen(button.dataset.screenTarget);
     });
+  });
+
+  resetGameButton.addEventListener("click", () => {
+    resetGameState();
+    renderDungeonIssues(currentIssues, dungeonCopy, levelSectionsEl);
   });
 });

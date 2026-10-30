@@ -141,6 +141,40 @@ function getCodeSearchUrl(issue, keywords) {
   }
 }
 
+function isValidPullRequestLink(value) {
+  return /^https:\/\/github\.com\/[A-Za-z0-9-]+\/[A-Za-z0-9._-]+\/pull\/[1-9]\d*\/?$/i.test(String(value || "").trim());
+}
+
+function formatXp(value) {
+  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(1)));
+}
+
+function playVictoryBurst(container) {
+  const colors = ["#f7b928", "#ff7a1a", "#7cffb2", "#e87a77", "#8fb0e0"];
+  const burst = document.createElement("div");
+  burst.className = "victory-burst";
+  burst.setAttribute("aria-hidden", "true");
+
+  const ghost = document.createElement("span");
+  ghost.className = "victory-ghost";
+  ghost.textContent = "👻";
+  burst.appendChild(ghost);
+
+  for (let index = 0; index < 28; index += 1) {
+    const piece = document.createElement("i");
+    piece.className = "victory-confetti";
+    piece.style.setProperty("--confetti-x", `${Math.round((Math.random() - 0.5) * 600)}px`);
+    piece.style.setProperty("--confetti-y", `${Math.round((Math.random() - 0.5) * 360)}px`);
+    piece.style.setProperty("--confetti-turn", `${Math.round(Math.random() * 720 - 360)}deg`);
+    piece.style.setProperty("--confetti-delay", `${Math.round(Math.random() * 180)}ms`);
+    piece.style.setProperty("--confetti-color", colors[index % colors.length]);
+    burst.appendChild(piece);
+  }
+
+  container.appendChild(burst);
+  window.setTimeout(() => burst.remove(), 1800);
+}
+
 function openFightScreen(issue) {
   if (!issue) {
     return;
@@ -165,7 +199,6 @@ function openFightScreen(issue) {
     monster,
     hp: alreadyDefeated ? 0 : maxHp,
     maxHp,
-    hits: 0,
     hintLevel: initialHintLevel,
     defeated: alreadyDefeated,
   };
@@ -363,49 +396,115 @@ function openFightScreen(issue) {
 
   hintSection.append(hintHeading, hintButtons, hintStatus, hintOutput);
 
+  const banishForm = document.createElement("form");
+  banishForm.className = "banish-form";
+
+  const prLabel = document.createElement("label");
+  prLabel.htmlFor = "pr-link";
+  prLabel.textContent = "Paste your Pull Request link";
+
+  const banishRow = document.createElement("div");
+  banishRow.className = "banish-form-row";
+
+  const prInput = document.createElement("input");
+  prInput.id = "pr-link";
+  prInput.name = "pr-link";
+  prInput.type = "text";
+  prInput.inputMode = "url";
+  prInput.autocomplete = "url";
+  prInput.placeholder = "https://github.com/owner/repo/pull/123";
+  prInput.setAttribute("aria-describedby", "banish-feedback");
+  prInput.disabled = alreadyDefeated;
+
+  const banishButton = document.createElement("button");
+  banishButton.className = "primary-button banish-button";
+  banishButton.type = "submit";
+  banishButton.textContent = "Banish the monster";
+  banishButton.disabled = alreadyDefeated;
+
+  const banishFeedback = document.createElement("p");
+  banishFeedback.className = "banish-feedback";
+  banishFeedback.id = "banish-feedback";
+  banishFeedback.setAttribute("role", "alert");
+  banishFeedback.hidden = true;
+
+  if (alreadyDefeated) {
+    banishFeedback.textContent = "This monster has already been banished.";
+    banishFeedback.hidden = false;
+  }
+
+  banishRow.append(prInput, banishButton);
+  banishForm.append(prLabel, banishRow, banishFeedback);
+
   const actions = document.createElement("div");
   actions.className = "fight-actions";
-
-  const attackButton = document.createElement("button");
-  attackButton.className = "primary-button fight-attack";
-  attackButton.type = "button";
-  attackButton.disabled = alreadyDefeated;
-  attackButton.textContent = alreadyDefeated ? "ALREADY DEFEATED" : "HIT THE MONSTER";
 
   const backButton = document.createElement("button");
   backButton.className = "secondary-button fight-back";
   backButton.type = "button";
   backButton.textContent = "← Back to map";
 
-  attackButton.addEventListener("click", () => {
+  banishForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
     if (!activeFight || activeFight.defeated) {
       return;
     }
 
-    activeFight.hp = Math.max(0, activeFight.hp - 34);
-    activeFight.hits += 1;
-    hpBar.value = activeFight.hp;
-    hpValue.textContent = `${activeFight.hp} / ${maxHp}`;
-    monsterEmoji.classList.remove("is-hit");
-    void monsterEmoji.offsetWidth;
-    monsterEmoji.classList.add("is-hit");
-
-    if (activeFight.hp === 0) {
-      activeFight.defeated = true;
-      const earnedXp = defeatMonster(issue, monster);
-      monsterEmoji.classList.add("is-banished");
-      attackButton.disabled = true;
-      attackButton.textContent = earnedXp ? "MONSTER DEFEATED" : "ALREADY DEFEATED";
-      updateXpReward();
-      hintButtons.querySelectorAll("button").forEach((button) => {
-        button.disabled = true;
-      });
-      dialogueText.textContent = earnedXp
-        ? `${monster.name} fades into the dark. You earned ${earnedXp} XP.`
-        : `${monster.name} has already been banished from this repository.`;
-    } else {
-      dialogueText.textContent = getMonsterLine(monster, activeFight.hits);
+    if (!isValidPullRequestLink(prInput.value)) {
+      banishFeedback.textContent = "That link doesn't look like a pull request. Try https://github.com/owner/repo/pull/123.";
+      banishFeedback.hidden = false;
+      prInput.setAttribute("aria-invalid", "true");
+      return;
     }
+
+    banishFeedback.hidden = true;
+    prInput.removeAttribute("aria-invalid");
+    const earnedXp = defeatMonster(issue, monster);
+
+    if (!earnedXp) {
+      banishFeedback.textContent = "This monster has already been banished.";
+      banishFeedback.hidden = false;
+      return;
+    }
+
+    activeFight.defeated = true;
+    activeFight.hp = 0;
+    hpBar.value = 0;
+    hpValue.textContent = `0 / ${maxHp}`;
+    monsterEmoji.classList.add("is-hit", "is-banished");
+    banishButton.disabled = true;
+    prInput.disabled = true;
+    backButton.disabled = true;
+    hintButtons.querySelectorAll("button").forEach((button) => {
+      button.disabled = true;
+    });
+    updateXpReward();
+    dialogueText.textContent = `${monster.name} fades into the dark. You earned ${formatXp(earnedXp)} XP.`;
+
+    const victoryBanner = document.createElement("div");
+    victoryBanner.className = "victory-banner";
+    victoryBanner.setAttribute("role", "status");
+    victoryBanner.textContent = `Monster defeated! +${formatXp(earnedXp)} XP`;
+    fightCard.prepend(victoryBanner);
+    playVictoryBurst(fightCard);
+
+    window.setTimeout(() => {
+      const issues = typeof currentIssues === "undefined" ? [] : currentIssues;
+      const copy = document.getElementById("dungeon-copy");
+      const sections = document.getElementById("level-sections");
+
+      if (copy && sections && typeof renderDungeonIssues === "function") {
+        renderDungeonIssues(issues, copy, sections);
+      }
+
+      showScreen("dungeon");
+      if (sections) {
+        sections.before(victoryBanner);
+      }
+      victoryBanner.classList.add("map-victory-banner");
+      window.setTimeout(() => victoryBanner.remove(), 4500);
+    }, 1500);
   });
 
   backButton.addEventListener("click", () => {
@@ -420,16 +519,12 @@ function openFightScreen(issue) {
     showScreen("dungeon");
   });
 
-  actions.append(attackButton, backButton);
-  fightCard.append(kicker, fightGrid, dialogue, hintSection, actions);
+  actions.appendChild(backButton);
+  fightCard.append(kicker, fightGrid, dialogue, hintSection, banishForm, actions);
   showScreen("fight");
 }
 
 document.addEventListener("click", (event) => {
-  if (event.target.closest(".defeat-button")) {
-    return;
-  }
-
   const monsterCard = event.target.closest(".monster-card");
 
   if (monsterCard) {
