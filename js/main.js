@@ -199,11 +199,11 @@ function renderDungeonIssues(issues, copyEl, containerEl) {
 
 // Show the loading spinner in the Dungeon map
 function renderDungeonLoading(copyEl, containerEl) {
-  copyEl.textContent = "Scanning the crypt for open issues...";
+  copyEl.textContent = "The crypt stirs...";
   containerEl.innerHTML = `
     <div class="dungeon-loading" role="status" aria-live="polite">
       <div class="dungeon-spinner" aria-hidden="true"></div>
-      <span>SUMMONING ISSUES...</span>
+      <span>Summoning ghosts...</span>
     </div>
   `;
 }

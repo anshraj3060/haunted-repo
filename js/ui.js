@@ -512,6 +512,9 @@ function openFightScreen(issue) {
       activeFight.hintLevel = highestHint;
       updateHintStatus(highestHint);
       updateXpReward();
+      fightCard.classList.remove("is-hint-shaking");
+      void fightCard.offsetWidth;
+      fightCard.classList.add("is-hint-shaking");
       renderHint(level);
       hintChoices.forEach(({ level: choiceLevel }, index) => {
         hintButtons.children[index].setAttribute("aria-pressed", String(choiceLevel === level));
