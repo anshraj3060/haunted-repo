@@ -481,6 +481,18 @@ h1 span { color: var(--orange); }
 .fight-actions { display: flex; justify-content: space-between; gap: 14px; margin-top: 24px; }
 .fight-actions button { min-width: 190px; }
 .fight-attack:disabled { opacity: 0.6; cursor: default; transform: none; }
+.fight-xp-reward { margin: 12px 0 0; color: var(--ghost-green); font-family: "Press Start 2P", monospace; font-size: 8px; line-height: 1.8; }
+.fight-hints { margin-top: 22px; padding: 16px; border: 1px solid rgba(143, 176, 224, 0.28); border-radius: 5px; background: rgba(16, 13, 24, 0.68); }
+.fight-hints-title { margin: 0 0 12px; color: var(--yellow); font-family: "Press Start 2P", monospace; font-size: 9px; line-height: 1.8; }
+.fight-hint-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.fight-hint-button { min-height: 40px; padding: 8px; border: 1px solid rgba(143, 176, 224, 0.42); border-radius: 4px; background: rgba(143, 176, 224, 0.07); color: var(--blue); cursor: pointer; font-family: "Press Start 2P", monospace; font-size: 7px; line-height: 1.7; transition: background 150ms ease, border-color 150ms ease, color 150ms ease; }
+.fight-hint-button:hover:not(:disabled), .fight-hint-button[aria-pressed="true"] { border-color: var(--yellow); background: rgba(247, 185, 40, 0.1); color: var(--yellow); }
+.fight-hint-button:disabled { opacity: 0.5; cursor: default; }
+.fight-hint-status { margin: 12px 0 8px; color: var(--muted); font-size: 18px; }
+.fight-hint-output { min-height: 42px; padding: 10px 12px; border-left: 3px solid var(--ghost-green); background: rgba(255, 255, 255, 0.035); color: var(--paper); font-size: 20px; line-height: 1.25; }
+.fight-hint-text { margin: 0; }
+.fight-code-search-link { display: inline-block; margin-top: 7px; color: var(--blue); font-size: 20px; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.fight-code-search-link:hover { color: var(--ghost-green); }
 
 @keyframes fight-float {
   0%, 100% { transform: translateY(0) rotate(-3deg); }
@@ -564,6 +576,7 @@ h1 span { color: var(--orange); }
   .fight-actions { flex-direction: column-reverse; }
   .fight-actions button { width: 100%; }
   .fight-hp-labels { font-size: 6px; }
+  .fight-hint-buttons { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

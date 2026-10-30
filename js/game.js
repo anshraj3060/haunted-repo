@@ -15,6 +15,32 @@ function getIssueId(issue) {
   return String(issue.id ?? issue.url ?? issue.number ?? issue.title ?? "unknown-issue");
 }
 
+function getHintLevel(issue) {
+  const hintsUsed = gameState.hintsUsed || {};
+  const level = Number(hintsUsed[getIssueId(issue)]) || 0;
+  return Math.min(3, Math.max(0, Math.floor(level)));
+}
+
+function recordHintUsed(issue, hintLevel) {
+  const issueId = getIssueId(issue);
+  const nextLevel = Math.min(3, Math.max(0, Math.floor(Number(hintLevel) || 0)));
+  gameState.hintsUsed = gameState.hintsUsed || {};
+  gameState.hintsUsed[issueId] = Math.max(getHintLevel(issue), nextLevel);
+  return gameState.hintsUsed[issueId];
+}
+
+function getXpMultiplier(hintLevel) {
+  if (hintLevel >= 3) {
+    return 0.5;
+  }
+
+  return hintLevel === 2 ? 0.75 : 1;
+}
+
+function getXpReward(issue, monster) {
+  return monster.xp * getXpMultiplier(getHintLevel(issue));
+}
+
 function defeatMonster(issue, monster) {
   const issueId = getIssueId(issue);
 
@@ -22,9 +48,10 @@ function defeatMonster(issue, monster) {
     return false;
   }
 
+  const earnedXp = getXpReward(issue, monster);
   gameState.defeated.push(issueId);
-  gameState.xp += monster.xp;
-  return true;
+  gameState.xp += earnedXp;
+  return earnedXp;
 }
 
 function countDefeatedInLevel(issues, level) {
