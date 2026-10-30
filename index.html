@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/style.css">
     <script src="js/monsters.js" defer></script>
     <script src="js/game.js" defer></script>
+    <script src="js/featured.js" defer></script>
     <script src="js/main.js" defer></script>
     <script src="js/ui.js" defer></script>
     <script src="js/ai.js" defer></script>
@@ -67,8 +68,16 @@
                 >
                 <button class="primary-button" type="submit">Enter the dungeon <span aria-hidden="true">→</span></button>
               </div>
-              <p class="form-note" id="repo-help">Paste a repository URL to begin.</p>
+              <p class="form-note" id="repo-help" role="status" aria-live="polite">Paste a repository URL to begin.</p>
             </form>
+
+            <section class="featured-section" aria-labelledby="featured-title">
+              <div class="featured-heading">
+                <h2 id="featured-title">Featured Repos</h2>
+                <p>Pick a haunted codebase to explore.</p>
+              </div>
+              <div class="featured-repo-grid" id="featured-repos"></div>
+            </section>
 
             <button class="secondary-button demo-mode-button" id="demo-mode" type="button">Demo mode</button>
 

@@ -276,6 +276,36 @@ h1 span { color: var(--orange); }
 .secondary-button { border-color: rgba(143, 176, 224, 0.45); background: rgba(143, 176, 224, 0.08); color: var(--blue); }
 .secondary-button:hover { transform: translateY(-2px); background: rgba(143, 176, 224, 0.15); }
 .form-note { margin: 9px 0 0; color: var(--muted); font-size: 17px; }
+
+.featured-section { max-width: 650px; margin: 26px auto 0; }
+.featured-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.featured-heading h2 { margin: 0; color: var(--ghost-green); font-size: 10px; line-height: 1.8; }
+.featured-heading p { margin: 0; color: var(--muted); font-size: 18px; }
+.featured-repo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 175px), 1fr)); gap: 10px; }
+.featured-repo-card {
+  display: flex;
+  min-width: 0;
+  min-height: 88px;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid rgba(143, 176, 224, 0.35);
+  border-radius: 6px;
+  background: linear-gradient(145deg, rgba(143, 176, 224, 0.08), rgba(28, 23, 42, 0.88));
+  box-shadow: 0 0 16px rgba(143, 176, 224, 0.07), inset 0 0 12px rgba(143, 176, 224, 0.025);
+  color: var(--paper);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.featured-repo-card:hover { transform: translateY(-3px); border-color: var(--ghost-green); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.24), 0 0 18px rgba(124, 255, 178, 0.16); }
+.featured-repo-card:focus-visible { outline: 2px solid var(--ghost-green); outline-offset: 3px; }
+.featured-repo-emoji { flex: 0 0 auto; font-size: 25px; line-height: 1; }
+.featured-repo-copy { display: grid; min-width: 0; gap: 7px; }
+.featured-repo-name { overflow: hidden; color: var(--yellow); font-family: "Press Start 2P", monospace; font-size: 7px; line-height: 1.7; text-overflow: ellipsis; white-space: nowrap; }
+.featured-repo-note { overflow: hidden; color: var(--muted); font-size: 17px; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
+
 .demo-mode-button { display: flex; width: fit-content; margin: 16px auto 0; }
 
 .home-steps {
@@ -689,6 +719,7 @@ h1 span { color: var(--orange); }
   .night-status { gap: 6px; font-size: 12px; }
   .home-screen, .placeholder-screen { min-height: 0; padding: 24px 0; }
   .home-card { padding: 24px 16px; }
+  .featured-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
   .input-row { flex-direction: column; }
   .input-row .primary-button { width: 100%; }
   .home-steps { align-items: flex-start; flex-direction: column; }
