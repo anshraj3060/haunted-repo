@@ -367,6 +367,7 @@ h1 span { color: var(--orange); }
 }
 
 .monster-card {
+  position: relative;
   display: flex;
   min-height: 240px;
   flex-direction: column;
@@ -391,10 +392,8 @@ h1 span { color: var(--orange); }
 .lock-icon { display: block; font-size: 42px; filter: drop-shadow(0 0 12px var(--level-glow)); }
 .lock-message { margin: 8px 0 0; color: var(--paper); font-size: 21px; }
 
-.monster-card.is-defeated { border-style: dashed; opacity: 0.72; }
-.defeat-button { width: 100%; min-height: 38px; margin-top: 10px; border: 1px solid var(--level-edge, rgba(247, 185, 40, 0.4)); border-radius: 4px; background: rgba(20, 16, 31, 0.72); color: var(--level-color, var(--yellow)); cursor: pointer; font-family: "Press Start 2P", monospace; font-size: 8px; transition: transform 150ms ease, box-shadow 150ms ease; }
-.defeat-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 0 14px var(--level-glow, rgba(247, 185, 40, 0.2)); }
-.defeat-button:disabled { color: var(--muted); cursor: default; }
+.monster-card.is-defeated { border-style: dashed; filter: grayscale(0.85); opacity: 0.65; }
+.monster-card.is-defeated::after { position: absolute; top: 10px; left: 12px; display: grid; width: 28px; height: 28px; border: 1px solid var(--muted); border-radius: 50%; background: rgba(20, 16, 31, 0.9); color: var(--paper); content: "✓"; font-size: 20px; font-weight: bold; place-items: center; }
 
 .monster-issue-number {
   align-self: flex-end;
@@ -446,6 +445,7 @@ h1 span { color: var(--orange); }
 
 /* Fight screen */
 .fight-card {
+  position: relative;
   width: min(940px, 100%);
   padding: clamp(22px, 4vw, 42px);
   border: 1px solid rgba(247, 185, 40, 0.35);
@@ -480,7 +480,6 @@ h1 span { color: var(--orange); }
 .dialogue-text { margin: 6px 0 0; color: var(--paper); font-size: 24px; line-height: 1.15; }
 .fight-actions { display: flex; justify-content: space-between; gap: 14px; margin-top: 24px; }
 .fight-actions button { min-width: 190px; }
-.fight-attack:disabled { opacity: 0.6; cursor: default; transform: none; }
 .fight-xp-reward { margin: 12px 0 0; color: var(--ghost-green); font-family: "Press Start 2P", monospace; font-size: 8px; line-height: 1.8; }
 .fight-hints { margin-top: 22px; padding: 16px; border: 1px solid rgba(143, 176, 224, 0.28); border-radius: 5px; background: rgba(16, 13, 24, 0.68); }
 .fight-hints-title { margin: 0 0 12px; color: var(--yellow); font-family: "Press Start 2P", monospace; font-size: 9px; line-height: 1.8; }
@@ -493,6 +492,37 @@ h1 span { color: var(--orange); }
 .fight-hint-text { margin: 0; }
 .fight-code-search-link { display: inline-block; margin-top: 7px; color: var(--blue); font-size: 20px; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .fight-code-search-link:hover { color: var(--ghost-green); }
+
+.banish-form { margin-top: 22px; padding: 16px; border: 1px solid rgba(247, 185, 40, 0.35); border-radius: 5px; background: rgba(16, 13, 24, 0.7); }
+.banish-form label { display: block; margin-bottom: 10px; color: var(--paper); font-family: "Press Start 2P", monospace; font-size: 8px; line-height: 1.8; }
+.banish-form-row { display: flex; gap: 10px; }
+.banish-form input { flex: 1; min-width: 0; padding: 11px 12px; border: 1px solid rgba(255, 242, 215, 0.24); border-radius: 4px; background: rgba(255, 255, 255, 0.04); color: var(--paper); font-size: 20px; }
+.banish-form input::placeholder { color: #8d8498; opacity: 1; }
+.banish-button { min-width: 220px; }
+.banish-button:disabled { opacity: 0.55; cursor: default; transform: none; }
+.banish-feedback { margin: 10px 0 0; color: var(--pink); font-size: 20px; }
+.banish-feedback[hidden] { display: none; }
+
+.victory-banner { position: relative; z-index: 6; margin: 0 0 18px; padding: 14px 18px; border: 2px solid var(--ghost-green); border-radius: 4px; background: rgba(20, 38, 34, 0.96); box-shadow: 0 0 24px rgba(124, 255, 178, 0.28); color: var(--ghost-green); font-family: "Press Start 2P", monospace; font-size: 10px; line-height: 1.8; text-align: center; animation: victory-banner-in 300ms ease both; }
+.map-victory-banner { margin: 0 0 18px; }
+.victory-burst { position: absolute; z-index: 5; inset: 0; overflow: hidden; pointer-events: none; }
+.victory-ghost { position: absolute; top: 45%; left: 50%; color: white; font-size: clamp(72px, 15vw, 140px); filter: drop-shadow(0 0 24px rgba(124, 255, 178, 0.9)); animation: victory-ghost-burst 1.5s ease-out both; }
+.victory-confetti { position: absolute; top: 45%; left: 50%; width: 9px; height: 15px; border-radius: 2px; background: var(--confetti-color, var(--yellow)); animation: victory-confetti-burst 1.4s ease-out var(--confetti-delay, 0ms) both; }
+
+@keyframes victory-banner-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes victory-ghost-burst {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.25) rotate(-18deg); }
+  30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(8deg); }
+  100% { opacity: 0; transform: translate(-50%, -115%) scale(1.55) rotate(14deg); }
+}
+@keyframes victory-confetti-burst {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(0); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate(var(--confetti-x), var(--confetti-y)) scale(1) rotate(var(--confetti-turn)); }
+}
 
 @keyframes fight-float {
   0%, 100% { transform: translateY(0) rotate(-3deg); }
@@ -577,6 +607,8 @@ h1 span { color: var(--orange); }
   .fight-actions button { width: 100%; }
   .fight-hp-labels { font-size: 6px; }
   .fight-hint-buttons { grid-template-columns: 1fr; }
+  .banish-form-row { flex-direction: column; }
+  .banish-button { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
