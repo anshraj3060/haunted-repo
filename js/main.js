@@ -63,6 +63,47 @@ function updateRankBar() {
     : "MAX RANK REACHED";
 }
 
+function renderFeaturedRepos(repoForm, repoInput) {
+  const container = document.getElementById("featured-repos");
+  if (!container || typeof featuredRepos === "undefined") {
+    return;
+  }
+
+  const cards = document.createDocumentFragment();
+  featuredRepos.forEach(({ repo, note, emoji }) => {
+    const button = document.createElement("button");
+    button.className = "featured-repo-card";
+    button.type = "button";
+    button.setAttribute("aria-label", `Load ${repo}: ${note}`);
+
+    const icon = document.createElement("span");
+    icon.className = "featured-repo-emoji";
+    icon.textContent = emoji;
+    icon.setAttribute("aria-hidden", "true");
+
+    const copy = document.createElement("span");
+    copy.className = "featured-repo-copy";
+
+    const name = document.createElement("span");
+    name.className = "featured-repo-name";
+    name.textContent = repo;
+
+    const description = document.createElement("span");
+    description.className = "featured-repo-note";
+    description.textContent = note;
+
+    copy.append(name, description);
+    button.append(icon, copy);
+    button.addEventListener("click", () => {
+      repoInput.value = repo;
+      repoForm.requestSubmit();
+    });
+    cards.appendChild(button);
+  });
+
+  container.replaceChildren(cards);
+}
+
 function createMonsterCard(issue, monster) {
   const fullTitle = String(issue.title || "Untitled issue").trim().replace(/\s+/g, " ");
   const shortTitle = fullTitle.length > 64 ? `${fullTitle.slice(0, 61).trimEnd()}…` : fullTitle;
@@ -233,6 +274,7 @@ document.addEventListener("DOMContentLoaded", () => {
   repoForm.noValidate = true;
   repoInput.type = "text";
   repoInput.placeholder = "https://github.com/owner/repo or owner/repo";
+  renderFeaturedRepos(repoForm, repoInput);
   updateRankBar();
   showScreen("home");
   ensureGithubLoaded().catch(() => {});
@@ -240,6 +282,8 @@ document.addEventListener("DOMContentLoaded", () => {
   repoForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const repoValue = repoInput.value.trim();
+    const isFeaturedRepo = typeof featuredRepos !== "undefined"
+      && featuredRepos.some((featured) => featured.repo.toLowerCase() === repoValue.toLowerCase());
 
     if (!repoValue) {
       repoHelp.textContent = 'Please enter a GitHub URL or "owner/repo" to begin.';
@@ -282,7 +326,14 @@ document.addEventListener("DOMContentLoaded", () => {
       currentIssues = [];
       const message = error.message || "Something went wrong while fetching issues.";
       renderDungeonError(message, dungeonCopy, levelSectionsEl);
-      repoHelp.textContent = message;
+      if (isFeaturedRepo) {
+        repoHelp.textContent = /rate limit|403|429/i.test(message)
+          ? "GitHub is taking a breather. Please wait a few minutes, or try Demo mode."
+          : "We couldn't load this repo just now. Check the repo or connection, or try Demo mode.";
+        showScreen("home");
+      } else {
+        repoHelp.textContent = message;
+      }
       repoHelp.classList.add("form-note-error");
     } finally {
       if (requestId === activeRequestId) {
