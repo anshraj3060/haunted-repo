@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#14101f">
+    <meta name="description" content="Every bug is a ghost. Catch it in Haunted Repo, a Halloween GitHub game.">
+    <title>Haunted Repo — Every bug is a ghost</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/main.js" defer></script>
+  </head>
+  <body>
+    <div class="scene" aria-hidden="true">
+      <div class="moon"></div>
+      <div class="stars">
+        <span class="star star-1">✦</span>
+        <span class="star star-2">·</span>
+        <span class="star star-3">✧</span>
+        <span class="star star-4">·</span>
+        <span class="star star-5">✦</span>
+        <span class="star star-6">·</span>
+        <span class="star star-7">✧</span>
+        <span class="star star-8">·</span>
+        <span class="star star-9">✦</span>
+        <span class="star star-10">·</span>
+      </div>
+      <span class="floating-ghost ghost-one">👻</span>
+      <span class="floating-ghost ghost-two">👻</span>
+      <span class="floating-ghost ghost-three">👻</span>
+    </div>
+
+    <div class="app-shell">
+      <header class="topbar">
+        <button class="brand" type="button" data-screen-target="home" aria-label="Go to Haunted Repo home">
+          <span class="brand-mark" aria-hidden="true">☾</span>
+          <span>HAUNTED REPO</span>
+        </button>
+        <div class="night-status"><span class="status-dot"></span> AFTER DARK</div>
+      </header>
+
+      <main class="screens">
+        <section class="screen home-screen" id="home-screen" aria-labelledby="home-title">
+          <div class="home-card">
+            <p class="eyebrow"><span aria-hidden="true">✦</span> A HALLOWEEN GITHUB GAME</p>
+            <h1 id="home-title">HAUNTED<br><span>REPO</span></h1>
+            <p class="tagline">Every bug is a ghost. <span>Catch it.</span></p>
+            <p class="intro-copy">Step into the haunted side of your issue list.</p>
+
+            <form class="repo-form" id="repo-form">
+              <label for="repo-url">GITHUB REPOSITORY URL</label>
+              <div class="input-row">
+                <input
+                  id="repo-url"
+                  name="repo-url"
+                  type="url"
+                  placeholder="https://github.com/owner/repo"
+                  autocomplete="url"
+                  required
+                >
+                <button class="primary-button" type="submit">Enter the dungeon <span aria-hidden="true">→</span></button>
+              </div>
+              <p class="form-note" id="repo-help">Paste a repository URL to begin.</p>
+            </form>
+
+            <div class="home-steps" aria-label="How to play">
+              <span><b>01</b> FIND A REPO</span>
+              <i aria-hidden="true"></i>
+              <span><b>02</b> FACE THE ISSUES</span>
+              <i aria-hidden="true"></i>
+              <span><b>03</b> CATCH THE BUGS</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen placeholder-screen" id="dungeon-screen" aria-labelledby="dungeon-title" hidden>
+          <div class="placeholder-card">
+            <p class="eyebrow"><span aria-hidden="true">✦</span> STAGE 01 · THE DESCENT</p>
+            <span class="placeholder-icon" aria-hidden="true">🗺️</span>
+            <h2 id="dungeon-title">THE DUNGEON</h2>
+            <p class="placeholder-copy">The map is still buried in fog.</p>
+            <div class="empty-state">DUNGEON MAP PLACEHOLDER</div>
+            <div class="screen-actions">
+              <button class="secondary-button" type="button" data-screen-target="home">← Back to home</button>
+              <button class="primary-button" type="button" data-screen-target="fight">Continue to the fight <span aria-hidden="true">→</span></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen placeholder-screen" id="fight-screen" aria-labelledby="fight-title" hidden>
+          <div class="placeholder-card">
+            <p class="eyebrow"><span aria-hidden="true">✦</span> STAGE 02 · ENCOUNTER</p>
+            <span class="placeholder-icon" aria-hidden="true">⚔️</span>
+            <h2 id="fight-title">THE FIGHT</h2>
+            <p class="placeholder-copy">Something stirs beyond the fog.</p>
+            <div class="empty-state">FIGHT SCREEN PLACEHOLDER</div>
+            <div class="screen-actions">
+              <button class="secondary-button" type="button" data-screen-target="dungeon">← Back to the dungeon</button>
+              <button class="primary-button" type="button" data-screen-target="home">Return to the surface <span aria-hidden="true">↗</span></button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <span>MADE FOR THE AFTER-HOURS MAINTAINER</span>
+        <span>KEEP A LIGHT ON <b aria-hidden="true">✦</b></span>
+      </footer>
+    </div>
+  </body>
+</html>
