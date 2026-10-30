@@ -332,6 +332,8 @@ function openFightScreen(issue) {
   hintOutput.setAttribute("role", "status");
   hintOutput.setAttribute("aria-live", "polite");
   let aiMonsterResult = null;
+  let hintRenderId = 0;
+  let currentHintDisplayLevel = 0;
 
   function updateHintStatus(level) {
     hintStatus.textContent = level
@@ -339,8 +341,127 @@ function openFightScreen(issue) {
       : "Highest hint used: none. Hints 2 and 3 reduce XP.";
   }
 
-  function renderHint(level) {
+  function showPatchFallback(message) {
     hintOutput.replaceChildren();
+    const fallback = document.createElement("p");
+    fallback.className = "ai-patch-fallback";
+    fallback.textContent = message || "Ollama isn't available right now. Start it locally and try Hint 3 again.";
+    hintOutput.appendChild(fallback);
+  }
+
+  function renderPatchDraft(draft) {
+    const result = document.createElement("div");
+    result.className = "ai-patch-result";
+
+    const bulletList = document.createElement("ul");
+    bulletList.className = "ai-patch-bullets";
+    draft.bullets.forEach((bullet) => {
+      const item = document.createElement("li");
+      item.textContent = bullet;
+      bulletList.appendChild(item);
+    });
+
+    const codeBox = document.createElement("pre");
+    codeBox.className = "ai-patch-code-box";
+    const code = document.createElement("code");
+    code.textContent = draft.snippet;
+    codeBox.appendChild(code);
+
+    const footer = document.createElement("div");
+    footer.className = "ai-patch-footer";
+    const warning = document.createElement("p");
+    warning.className = "ai-patch-warning";
+    warning.textContent = "AI draft. Read it, understand it, then write the fix yourself.";
+
+    const copyButton = document.createElement("button");
+    copyButton.className = "ai-patch-copy";
+    copyButton.type = "button";
+    copyButton.textContent = "Copy";
+    copyButton.addEventListener("click", async () => {
+      const copyText = `${draft.bullets.map((bullet) => `- ${bullet}`).join("\n")}\n\n${draft.snippet}`;
+
+      try {
+        if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(copyText);
+        } else {
+          const textarea = document.createElement("textarea");
+          textarea.value = copyText;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          try {
+            textarea.select();
+            const copied = document.execCommand && document.execCommand("copy");
+            if (!copied) {
+              throw new Error("Copy failed.");
+            }
+          } finally {
+            textarea.remove();
+          }
+        }
+
+        copyButton.textContent = "Copied!";
+      } catch {
+        copyButton.textContent = "Copy unavailable";
+      }
+
+      window.setTimeout(() => {
+        copyButton.textContent = "Copy";
+      }, 1600);
+    });
+
+    footer.append(warning, copyButton);
+    result.append(bulletList, codeBox, footer);
+    hintOutput.replaceChildren(result);
+  }
+
+  function renderHint(level) {
+    const renderId = ++hintRenderId;
+    currentHintDisplayLevel = level;
+    hintOutput.replaceChildren();
+
+    if (level === 3) {
+      const loading = document.createElement("div");
+      loading.className = "ai-patch-loading";
+      loading.setAttribute("role", "status");
+      loading.setAttribute("aria-live", "polite");
+
+      const pumpkin = document.createElement("span");
+      pumpkin.className = "ai-patch-pumpkin";
+      pumpkin.textContent = "🎃";
+      pumpkin.setAttribute("aria-hidden", "true");
+
+      const loadingText = document.createElement("span");
+      loadingText.textContent = "Dreaming up a draft fix...";
+      loading.append(pumpkin, loadingText);
+      hintOutput.appendChild(loading);
+
+      const issueId = getIssueId(issue);
+      if (typeof aiPatchHint !== "function") {
+        showPatchFallback();
+        return;
+      }
+
+      aiPatchHint(issue).then((draft) => {
+        if (renderId !== hintRenderId || !activeFight || getIssueId(activeFight.issue) !== issueId) {
+          return;
+        }
+
+        if (draft.source !== "ai" || !Array.isArray(draft.bullets) || !draft.snippet) {
+          showPatchFallback(draft.message);
+          return;
+        }
+
+        renderPatchDraft(draft);
+      }).catch(() => {
+        if (renderId === hintRenderId && activeFight && getIssueId(activeFight.issue) === issueId) {
+          showPatchFallback();
+        }
+      });
+      return;
+    }
+
     const hintText = document.createElement("p");
     hintText.className = "fight-hint-text";
 
@@ -369,7 +490,7 @@ function openFightScreen(issue) {
       return;
     }
 
-    hintText.textContent = "AI patch coming soon";
+    hintText.textContent = "Choose a hint to reveal a clue.";
     hintOutput.appendChild(hintText);
   }
 
@@ -554,8 +675,8 @@ function openFightScreen(issue) {
       hpBar.setAttribute("aria-label", `${name.textContent} health`);
       dialogueLabel.textContent = `${name.textContent} says:`;
 
-      if (activeFight.hintLevel) {
-        renderHint(activeFight.hintLevel);
+      if (currentHintDisplayLevel === 1 || currentHintDisplayLevel === 2) {
+        renderHint(currentHintDisplayLevel);
       }
     });
   } else {

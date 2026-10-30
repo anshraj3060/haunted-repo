@@ -493,6 +493,18 @@ h1 span { color: var(--orange); }
 .fight-hint-status { margin: 12px 0 8px; color: var(--muted); font-size: 18px; }
 .fight-hint-output { min-height: 42px; padding: 10px 12px; border-left: 3px solid var(--ghost-green); background: rgba(255, 255, 255, 0.035); color: var(--paper); font-size: 20px; line-height: 1.25; }
 .fight-hint-text { margin: 0; }
+.ai-patch-loading { display: flex; min-height: 42px; align-items: center; gap: 10px; color: var(--muted); }
+.ai-patch-pumpkin { display: inline-block; font-size: 25px; animation: ai-pumpkin-spin 1.2s linear infinite; }
+.ai-patch-result { display: grid; gap: 10px; }
+.ai-patch-bullets { margin: 0; padding-left: 1.4em; color: var(--paper); }
+.ai-patch-bullets li { margin: 0 0 4px; }
+.ai-patch-code-box { max-height: 180px; margin: 0; padding: 12px; overflow: auto; border: 1px solid rgba(143, 176, 224, 0.35); border-radius: 4px; background: rgba(10, 8, 14, 0.9); color: var(--ghost-green); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 15px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ai-patch-code-box code { font: inherit; white-space: inherit; }
+.ai-patch-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ai-patch-warning { margin: 0; color: var(--yellow); font-size: 18px; }
+.ai-patch-copy { flex-shrink: 0; padding: 7px 10px; border: 1px solid rgba(124, 255, 178, 0.4); border-radius: 4px; background: rgba(124, 255, 178, 0.08); color: var(--ghost-green); cursor: pointer; font-family: "Press Start 2P", monospace; font-size: 7px; }
+.ai-patch-copy:hover { background: rgba(124, 255, 178, 0.16); }
+.ai-patch-fallback { margin: 0; color: var(--muted); }
 .fight-code-search-link { display: inline-block; margin-top: 7px; color: var(--blue); font-size: 20px; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .fight-code-search-link:hover { color: var(--ghost-green); }
 
@@ -526,6 +538,8 @@ h1 span { color: var(--orange); }
   15% { opacity: 1; }
   100% { opacity: 0; transform: translate(-50%, -50%) translate(var(--confetti-x), var(--confetti-y)) scale(1) rotate(var(--confetti-turn)); }
 }
+
+@keyframes ai-pumpkin-spin { to { transform: rotate(360deg); } }
 
 @keyframes fight-float {
   0%, 100% { transform: translateY(0) rotate(-3deg); }
@@ -610,6 +624,7 @@ h1 span { color: var(--orange); }
   .fight-actions button { width: 100%; }
   .fight-hp-labels { font-size: 6px; }
   .fight-hint-buttons { grid-template-columns: 1fr; }
+  .ai-patch-footer { align-items: flex-start; flex-direction: column-reverse; }
   .banish-form-row { flex-direction: column; }
   .banish-button { width: 100%; }
 }
