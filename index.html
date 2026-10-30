@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/monsters.js" defer></script>
+    <script src="js/game.js" defer></script>
     <script src="js/main.js" defer></script>
   </head>
   <body>
@@ -76,13 +77,35 @@
           </div>
         </section>
 
-        <section class="screen placeholder-screen" id="dungeon-screen" aria-labelledby="dungeon-title" hidden>
-          <div class="placeholder-card">
-            <p class="eyebrow"><span aria-hidden="true">✦</span> STAGE 01 · THE DESCENT</p>
-            <span class="placeholder-icon" aria-hidden="true">🗺️</span>
-            <h2 id="dungeon-title">THE DUNGEON</h2>
-            <p class="placeholder-copy">The map is still buried in fog.</p>
-            <div class="empty-state">DUNGEON MAP PLACEHOLDER</div>
+        <section class="screen dungeon-screen" id="dungeon-screen" aria-labelledby="dungeon-title" hidden>
+          <div class="dungeon-layout">
+            <div class="game-topbar" aria-label="Player progress">
+              <div class="rank-identity">
+                <span class="rank-icon" aria-hidden="true">👻</span>
+                <div>
+                  <span class="rank-caption">CURRENT RANK</span>
+                  <strong id="rank-name">Rookie Ghost</strong>
+                </div>
+              </div>
+              <div class="rank-meter">
+                <div class="rank-meter-labels">
+                  <strong id="player-xp">0 XP</strong>
+                  <span id="rank-next">100 XP to Pumpkin Hunter</span>
+                </div>
+                <progress id="rank-progress" max="100" value="0" aria-label="Progress toward next rank"></progress>
+              </div>
+            </div>
+
+            <header class="map-heading">
+              <p class="eyebrow"><span aria-hidden="true">✦</span> STAGE 01 · THE DESCENT</p>
+              <h2 id="dungeon-title">THE DUNGEON</h2>
+              <p class="placeholder-copy" id="dungeon-copy">Enter a repository to summon its monsters.</p>
+            </header>
+
+            <div class="level-sections" id="level-sections">
+              <p class="section-empty">Your dungeon map will appear here.</p>
+            </div>
+
             <div class="screen-actions">
               <button class="secondary-button" type="button" data-screen-target="home">← Back to home</button>
               <button class="primary-button" type="button" data-screen-target="fight">Continue to the fight <span aria-hidden="true">→</span></button>
