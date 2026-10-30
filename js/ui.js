@@ -242,12 +242,17 @@ function openFightScreen(issue) {
   description.textContent = shortIssueDescription(issue.body);
 
   const issueLink = document.createElement("a");
+  const issueUrl = issue.html_url || issue.url || "";
   issueLink.className = "fight-issue-link";
   issueLink.textContent = "View issue on GitHub ↗";
-  issueLink.href = issue.url || issue.html_url || "#";
   issueLink.target = "_blank";
   issueLink.rel = "noopener noreferrer";
-  issueLink.hidden = !issue.url && !issue.html_url;
+  issueLink.hidden = !issueUrl;
+  if (issueUrl) {
+    issueLink.href = issueUrl;
+  } else {
+    issueLink.style.display = "none";
+  }
 
   const aiBadge = document.createElement("span");
   aiBadge.className = "ai-status-badge is-loading";
@@ -690,6 +695,10 @@ function openFightScreen(issue) {
 }
 
 document.addEventListener("click", (event) => {
+  if (event.target.closest(".fight-issue-link")) {
+    return;
+  }
+
   const monsterCard = event.target.closest(".monster-card");
 
   if (monsterCard) {

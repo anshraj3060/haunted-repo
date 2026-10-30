@@ -99,7 +99,7 @@ async function fetchIssues(repoUrl) {
         ? issue.labels.map((label) => (typeof label === "string" ? label : label.name)).filter(Boolean)
         : [],
       comments: issue.comments ?? 0,
-      url: issue.html_url || issue.url || "",
+      url: issue.html_url || "",
     }));
 }
 
