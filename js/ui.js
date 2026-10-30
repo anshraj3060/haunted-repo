@@ -249,6 +249,16 @@ function openFightScreen(issue) {
   issueLink.rel = "noopener noreferrer";
   issueLink.hidden = !issue.url && !issue.html_url;
 
+  const aiBadge = document.createElement("span");
+  aiBadge.className = "ai-status-badge is-loading";
+  aiBadge.textContent = "AI: waking up…";
+  aiBadge.setAttribute("role", "status");
+  aiBadge.setAttribute("aria-live", "polite");
+
+  const aiWeakness = document.createElement("p");
+  aiWeakness.className = "fight-weakness";
+  aiWeakness.textContent = `Weakness: ${monster.weakness}`;
+
   const hpPanel = document.createElement("div");
   hpPanel.className = "fight-hp-panel";
 
@@ -285,7 +295,7 @@ function openFightScreen(issue) {
   }
 
   updateXpReward();
-  details.append(name, level, issueTitle, description, issueLink, hpPanel, xpReward);
+  details.append(name, level, issueTitle, description, issueLink, aiBadge, aiWeakness, hpPanel, xpReward);
   fightGrid.append(visual, details);
 
   const dialogue = document.createElement("div");
@@ -321,6 +331,7 @@ function openFightScreen(issue) {
   hintOutput.className = "fight-hint-output";
   hintOutput.setAttribute("role", "status");
   hintOutput.setAttribute("aria-live", "polite");
+  let aiMonsterResult = null;
 
   function updateHintStatus(level) {
     hintStatus.textContent = level
@@ -334,14 +345,15 @@ function openFightScreen(issue) {
     hintText.className = "fight-hint-text";
 
     if (level === 1) {
-      hintText.textContent = getFirstHint(issue);
+      hintText.textContent = aiMonsterResult?.hint1 || getFirstHint(issue);
       hintOutput.appendChild(hintText);
       return;
     }
 
     if (level === 2) {
       const keywords = getIssueKeywords(issue.title);
-      hintText.textContent = `Search these issue-title keywords in the repo: ${keywords.join(", ") || "issue"}.`;
+      hintText.textContent = aiMonsterResult?.hint2
+        || `Search these issue-title keywords in the repo: ${keywords.join(", ") || "issue"}.`;
       hintOutput.appendChild(hintText);
 
       const searchUrl = getCodeSearchUrl(issue, keywords.length ? keywords : ["issue"]);
@@ -480,7 +492,7 @@ function openFightScreen(issue) {
       button.disabled = true;
     });
     updateXpReward();
-    dialogueText.textContent = `${monster.name} fades into the dark. You earned ${formatXp(earnedXp)} XP.`;
+    dialogueText.textContent = `${name.textContent} fades into the dark. You earned ${formatXp(earnedXp)} XP.`;
 
     const victoryBanner = document.createElement("div");
     victoryBanner.className = "victory-banner";
@@ -522,6 +534,35 @@ function openFightScreen(issue) {
   actions.appendChild(backButton);
   fightCard.append(kicker, fightGrid, dialogue, hintSection, banishForm, actions);
   showScreen("fight");
+
+  const aiIssueId = getIssueId(issue);
+  if (typeof aiMonster === "function") {
+    aiMonster(issue).then((result) => {
+      if (!activeFight || getIssueId(activeFight.issue) !== aiIssueId) {
+        return;
+      }
+
+      aiMonsterResult = result;
+      const isOnline = result.source === "ai";
+      aiBadge.textContent = isOnline ? "AI: Gemma (local)" : "AI: offline mode";
+      aiBadge.classList.remove("is-loading");
+      aiBadge.classList.toggle("is-online", isOnline);
+      aiBadge.classList.toggle("is-offline", !isOnline);
+      name.textContent = result.name || monster.name;
+      aiWeakness.textContent = `Weakness: ${result.weakness || monster.weakness}`;
+      visual.setAttribute("aria-label", name.textContent);
+      hpBar.setAttribute("aria-label", `${name.textContent} health`);
+      dialogueLabel.textContent = `${name.textContent} says:`;
+
+      if (activeFight.hintLevel) {
+        renderHint(activeFight.hintLevel);
+      }
+    });
+  } else {
+    aiBadge.textContent = "AI: offline mode";
+    aiBadge.classList.remove("is-loading");
+    aiBadge.classList.add("is-offline");
+  }
 }
 
 document.addEventListener("click", (event) => {
