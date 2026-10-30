@@ -50,6 +50,10 @@ function shortIssueDescription(body) {
 }
 
 function findIssueForCard(card) {
+  if (!card) {
+    return null;
+  }
+
   const numberLabel = card.querySelector(".monster-issue-number");
   const match = numberLabel?.textContent.match(/#(\d+)/);
   const issues = typeof currentIssues === "undefined" ? [] : currentIssues;
@@ -70,6 +74,73 @@ function getMonsterLine(monster, hitCount = 0, defeated = false) {
   return lines[hitCount % lines.length];
 }
 
+function getIssueLabels(issue) {
+  if (Array.isArray(issue.labels)) {
+    return issue.labels.map((label) => String(label?.name || label || "").toLowerCase());
+  }
+
+  return issue.labels ? [String(issue.labels).toLowerCase()] : [];
+}
+
+function getFirstHint(issue) {
+  const labels = getIssueLabels(issue);
+
+  if (labels.some((label) => label.includes("bug"))) {
+    return "Try to reproduce the problem first.";
+  }
+  if (labels.some((label) => /security|vulnerab/.test(label))) {
+    return "Trace how sensitive data is handled and check the access rules.";
+  }
+  if (labels.some((label) => /performance|slow/.test(label))) {
+    return "Measure the slow path before changing the code.";
+  }
+  if (labels.some((label) => /documentation|docs|readme|typo/.test(label))) {
+    return "Find the related docs section and check what is out of date.";
+  }
+  if (labels.some((label) => /test|ci/.test(label))) {
+    return "Run the related test first, then isolate the failing case.";
+  }
+  if (labels.some((label) => /feature|enhancement/.test(label))) {
+    return "Look for the component that owns this feature before adding to it.";
+  }
+
+  return "Follow the issue label to the part of the codebase it describes.";
+}
+
+function getIssueKeywords(title) {
+  const stopWords = new Set([
+    "the", "and", "for", "with", "from", "when", "this", "that", "into",
+    "some", "have", "has", "are", "was", "were", "how", "why", "what",
+    "where", "issue", "bug", "fix", "please",
+  ]);
+  const words = String(title || "").toLowerCase().match(/[a-z0-9]+/g) || [];
+  const keywords = [...new Set(words.filter((word) => word.length > 2 && !stopWords.has(word)))].slice(0, 4);
+
+  return keywords.length ? keywords : [...new Set(words)].slice(0, 4);
+}
+
+function getCodeSearchUrl(issue, keywords) {
+  if (!keywords.length) {
+    return "";
+  }
+
+  try {
+    const issueUrl = new URL(issue.url || issue.html_url);
+    if (issueUrl.hostname !== "github.com") {
+      return "";
+    }
+
+    const [owner, repo] = issueUrl.pathname.split("/").filter(Boolean);
+    if (!owner || !repo) {
+      return "";
+    }
+
+    return `https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/search?q=${encodeURIComponent(keywords.join(" "))}&type=code`;
+  } catch {
+    return "";
+  }
+}
+
 function openFightScreen(issue) {
   if (!issue) {
     return;
@@ -77,6 +148,7 @@ function openFightScreen(issue) {
 
   const monster = issueToMonster(issue);
   const alreadyDefeated = gameState.defeated.includes(getIssueId(issue));
+  const initialHintLevel = getHintLevel(issue);
   const maxHp = 100;
   const fightScreen = document.getElementById("fight-screen");
   let fightCard = fightScreen.querySelector(".fight-card, .placeholder-card");
@@ -94,6 +166,7 @@ function openFightScreen(issue) {
     hp: alreadyDefeated ? 0 : maxHp,
     maxHp,
     hits: 0,
+    hintLevel: initialHintLevel,
     defeated: alreadyDefeated,
   };
 
@@ -164,7 +237,22 @@ function openFightScreen(issue) {
 
   hpLabels.append(hpLabel, hpValue);
   hpPanel.append(hpLabels, hpBar);
-  details.append(name, level, issueTitle, description, issueLink, hpPanel);
+
+  const xpReward = document.createElement("p");
+  xpReward.className = "fight-xp-reward";
+
+  function updateXpReward() {
+    if (activeFight.defeated) {
+      xpReward.textContent = "XP REWARD: CLAIMED";
+      return;
+    }
+
+    const multiplier = Math.round(getXpMultiplier(getHintLevel(issue)) * 100);
+    xpReward.textContent = `CURRENT XP REWARD: +${getXpReward(issue, monster)} XP · ${multiplier}%`;
+  }
+
+  updateXpReward();
+  details.append(name, level, issueTitle, description, issueLink, hpPanel, xpReward);
   fightGrid.append(visual, details);
 
   const dialogue = document.createElement("div");
@@ -180,6 +268,100 @@ function openFightScreen(issue) {
   dialogueText.className = "dialogue-text";
   dialogueText.textContent = getMonsterLine(monster, 0, alreadyDefeated);
   dialogue.append(dialogueLabel, dialogueText);
+
+  const hintSection = document.createElement("section");
+  hintSection.className = "fight-hints";
+  hintSection.setAttribute("aria-labelledby", "fight-hints-title");
+
+  const hintHeading = document.createElement("h3");
+  hintHeading.id = "fight-hints-title";
+  hintHeading.className = "fight-hints-title";
+  hintHeading.textContent = "NEED A CLUE?";
+
+  const hintButtons = document.createElement("div");
+  hintButtons.className = "fight-hint-buttons";
+
+  const hintStatus = document.createElement("p");
+  hintStatus.className = "fight-hint-status";
+
+  const hintOutput = document.createElement("div");
+  hintOutput.className = "fight-hint-output";
+  hintOutput.setAttribute("role", "status");
+  hintOutput.setAttribute("aria-live", "polite");
+
+  function updateHintStatus(level) {
+    hintStatus.textContent = level
+      ? `Highest hint used: Hint ${level}`
+      : "Highest hint used: none. Hints 2 and 3 reduce XP.";
+  }
+
+  function renderHint(level) {
+    hintOutput.replaceChildren();
+    const hintText = document.createElement("p");
+    hintText.className = "fight-hint-text";
+
+    if (level === 1) {
+      hintText.textContent = getFirstHint(issue);
+      hintOutput.appendChild(hintText);
+      return;
+    }
+
+    if (level === 2) {
+      const keywords = getIssueKeywords(issue.title);
+      hintText.textContent = `Search these issue-title keywords in the repo: ${keywords.join(", ") || "issue"}.`;
+      hintOutput.appendChild(hintText);
+
+      const searchUrl = getCodeSearchUrl(issue, keywords.length ? keywords : ["issue"]);
+      if (searchUrl) {
+        const searchLink = document.createElement("a");
+        searchLink.className = "fight-code-search-link";
+        searchLink.href = searchUrl;
+        searchLink.target = "_blank";
+        searchLink.rel = "noopener noreferrer";
+        searchLink.textContent = "Search GitHub code ↗";
+        hintOutput.appendChild(searchLink);
+      }
+      return;
+    }
+
+    hintText.textContent = "AI patch coming soon";
+    hintOutput.appendChild(hintText);
+  }
+
+  const hintChoices = [
+    { level: 1, label: "Hint 1" },
+    { level: 2, label: "Hint 2" },
+    { level: 3, label: "Hint 3 (AI patch)" },
+  ];
+
+  hintChoices.forEach(({ level, label }) => {
+    const hintButton = document.createElement("button");
+    hintButton.className = "fight-hint-button";
+    hintButton.type = "button";
+    hintButton.textContent = label;
+    hintButton.disabled = alreadyDefeated;
+    hintButton.setAttribute("aria-pressed", String(level === initialHintLevel));
+    hintButton.addEventListener("click", () => {
+      const highestHint = recordHintUsed(issue, level);
+      activeFight.hintLevel = highestHint;
+      updateHintStatus(highestHint);
+      updateXpReward();
+      renderHint(level);
+      hintChoices.forEach(({ level: choiceLevel }, index) => {
+        hintButtons.children[index].setAttribute("aria-pressed", String(choiceLevel === level));
+      });
+    });
+    hintButtons.appendChild(hintButton);
+  });
+
+  updateHintStatus(initialHintLevel);
+  if (initialHintLevel) {
+    renderHint(initialHintLevel);
+  } else {
+    hintOutput.textContent = "Choose a hint to reveal a clue.";
+  }
+
+  hintSection.append(hintHeading, hintButtons, hintStatus, hintOutput);
 
   const actions = document.createElement("div");
   actions.className = "fight-actions";
@@ -214,8 +396,12 @@ function openFightScreen(issue) {
       monsterEmoji.classList.add("is-banished");
       attackButton.disabled = true;
       attackButton.textContent = earnedXp ? "MONSTER DEFEATED" : "ALREADY DEFEATED";
+      updateXpReward();
+      hintButtons.querySelectorAll("button").forEach((button) => {
+        button.disabled = true;
+      });
       dialogueText.textContent = earnedXp
-        ? `${monster.name} fades into the dark. You earned ${monster.xp} XP.`
+        ? `${monster.name} fades into the dark. You earned ${earnedXp} XP.`
         : `${monster.name} has already been banished from this repository.`;
     } else {
       dialogueText.textContent = getMonsterLine(monster, activeFight.hits);
@@ -235,7 +421,7 @@ function openFightScreen(issue) {
   });
 
   actions.append(attackButton, backButton);
-  fightCard.append(kicker, fightGrid, dialogue, actions);
+  fightCard.append(kicker, fightGrid, dialogue, hintSection, actions);
   showScreen("fight");
 }
 
