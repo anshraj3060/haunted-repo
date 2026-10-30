@@ -19,7 +19,7 @@ function showScreen(name) {
   selectedScreen.setAttribute("aria-hidden", "false");
 }
 
-// Load js/github.js dynamically if not already included in index.html
+// Load js/github.js dynamically if it is not already available
 function ensureGithubLoaded() {
   if (typeof fetchIssues === "function") {
     return Promise.resolve();
@@ -41,7 +41,7 @@ function ensureGithubLoaded() {
   return githubLoadPromise;
 }
 
-// Add minimal styles for the loading spinner and Dungeon issue list
+// Add styles for loading and error messages
 function injectDungeonStyles() {
   if (document.getElementById("dungeon-dynamic-styles")) {
     return;
@@ -56,14 +56,6 @@ function injectDungeonStyles() {
       border: 4px solid rgba(247, 185, 40, 0.22); border-top-color: var(--orange);
       animation: dungeon-spin 0.8s linear infinite;
     }
-    .issue-list {
-      width: 100%; max-height: 320px; margin: 0; padding: 12px 16px;
-      overflow-y: auto; list-style: none; text-align: left;
-      font-family: "VT323", monospace; font-size: 21px; line-height: 1.35; color: var(--paper);
-    }
-    .issue-list li { display: flex; gap: 10px; padding: 8px 6px; border-bottom: 1px solid rgba(255, 242, 215, 0.08); }
-    .issue-list li:last-child { border-bottom: 0; }
-    .issue-number { flex-shrink: 0; color: var(--yellow); }
     .dungeon-message { padding: 20px; font-family: "VT323", monospace; font-size: 22px; line-height: 1.4; }
     .dungeon-error { color: var(--pink); }
     .form-note-error { color: var(--pink); }
@@ -72,9 +64,10 @@ function injectDungeonStyles() {
   document.head.appendChild(style);
 }
 
-// Render loading spinner inside the Dungeon map container
+// Show the loading spinner in the Dungeon map
 function renderDungeonLoading(copyEl, containerEl) {
   copyEl.textContent = "Scanning the crypt for open issues...";
+  containerEl.className = "dungeon-results";
   containerEl.innerHTML = `
     <div class="dungeon-loading" role="status" aria-live="polite">
       <div class="dungeon-spinner" aria-hidden="true"></div>
@@ -83,9 +76,56 @@ function renderDungeonLoading(copyEl, containerEl) {
   `;
 }
 
-// Render fetched issue titles or empty state on the Dungeon screen
+function createMonsterCard(issue) {
+  const monster = issueToMonster(issue);
+  const fullTitle = String(issue.title || "Untitled issue").trim().replace(/\s+/g, " ");
+  const shortTitle = fullTitle.length > 64 ? `${fullTitle.slice(0, 61).trimEnd()}…` : fullTitle;
+  const card = document.createElement("article");
+  card.className = "monster-card";
+  card.setAttribute("role", "listitem");
+
+  const number = document.createElement("span");
+  number.className = "monster-issue-number";
+  number.textContent = `ISSUE #${issue.number ?? "?"}`;
+
+  const emoji = document.createElement("div");
+  emoji.className = "monster-emoji";
+  emoji.setAttribute("aria-hidden", "true");
+  emoji.textContent = monster.emoji;
+
+  const name = document.createElement("h3");
+  name.className = "monster-name";
+  name.textContent = monster.name;
+
+  const title = document.createElement("p");
+  title.className = "monster-title";
+  title.textContent = shortTitle;
+  title.title = fullTitle;
+
+  const weakness = document.createElement("p");
+  weakness.className = "monster-weakness";
+  weakness.textContent = `Weakness: ${monster.weakness}`;
+
+  const meta = document.createElement("div");
+  meta.className = "monster-meta";
+
+  const level = document.createElement("span");
+  level.className = "monster-level";
+  level.textContent = `LEVEL ${monster.level}`;
+
+  const xp = document.createElement("span");
+  xp.className = "monster-xp";
+  xp.textContent = `${monster.xp} XP`;
+
+  meta.append(level, xp);
+  card.append(number, emoji, name, title, weakness, meta);
+  return card;
+}
+
+// Render issue monsters or an empty state on the Dungeon screen
 function renderDungeonIssues(issues, copyEl, containerEl) {
-  containerEl.innerHTML = "";
+  containerEl.className = "dungeon-results";
+  containerEl.replaceChildren();
 
   if (issues.length === 0) {
     copyEl.textContent = "All quiet in this repository.";
@@ -96,37 +136,29 @@ function renderDungeonIssues(issues, copyEl, containerEl) {
     return;
   }
 
-  copyEl.textContent = `${issues.length} open issue${issues.length === 1 ? "" : "s"} lurking in the dungeon:`;
-  const list = document.createElement("ul");
-  list.className = "issue-list";
+  copyEl.textContent = `${issues.length} open issue${issues.length === 1 ? "" : "s"} transformed into monsters:`;
+  const grid = document.createElement("div");
+  grid.className = "monster-grid";
+  grid.setAttribute("role", "list");
 
   issues.forEach((issue) => {
-    const item = document.createElement("li");
-
-    const num = document.createElement("span");
-    num.className = "issue-number";
-    num.textContent = `#${issue.number}`;
-
-    const title = document.createElement("span");
-    title.textContent = issue.title;
-
-    item.append(num, title);
-    list.appendChild(item);
+    grid.appendChild(createMonsterCard(issue));
   });
 
-  containerEl.appendChild(list);
+  containerEl.appendChild(grid);
 }
 
-// Render a friendly error message on the Dungeon screen
+// Show a friendly error on the Dungeon screen
 function renderDungeonError(message, copyEl, containerEl) {
   copyEl.textContent = "The dungeon gates stayed shut.";
-  containerEl.innerHTML = "";
+  containerEl.className = "dungeon-results";
+  containerEl.replaceChildren();
 
-  const errEl = document.createElement("div");
-  errEl.className = "dungeon-message dungeon-error";
-  errEl.setAttribute("role", "alert");
-  errEl.textContent = message;
-  containerEl.appendChild(errEl);
+  const error = document.createElement("div");
+  error.className = "dungeon-message dungeon-error";
+  error.setAttribute("role", "alert");
+  error.textContent = message;
+  containerEl.appendChild(error);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -141,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
   injectDungeonStyles();
   ensureGithubLoaded().catch(() => {});
 
-  // Allow both full GitHub URLs and "owner/repo" shorthand in the input
+  // Accept full GitHub URLs and "owner/repo" shorthand
   repoForm.noValidate = true;
   repoInput.type = "text";
   repoInput.placeholder = "https://github.com/owner/repo or owner/repo";
