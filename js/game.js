@@ -138,9 +138,13 @@ function isLevelUnlocked(level, issues) {
     return true;
   }
 
-  const previousLevel = level - 1;
-  const previousIssues = issues.filter((issue) => issueToMonster(issue).level === previousLevel);
-  return previousIssues.length === 0 || countDefeatedInLevel(issues, previousLevel) >= 2;
+  const requiredLevel = level === 2 ? 1 : level === 3 ? 2 : null;
+  if (requiredLevel === null) {
+    return false;
+  }
+
+  const requiredIssues = issues.filter((issue) => issueToMonster(issue).level === requiredLevel);
+  return requiredIssues.length === 0 || countDefeatedInLevel(issues, requiredLevel) >= 2;
 }
 
 function getRankStatus() {

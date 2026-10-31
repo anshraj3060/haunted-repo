@@ -206,7 +206,7 @@ function createLevelSection(sectionInfo, groupedIssues, allIssues) {
 
     const lockMessage = document.createElement("p");
     lockMessage.className = "lock-message";
-    lockMessage.textContent = `Defeat 2 Level ${level - 1} monsters to unlock.`;
+    lockMessage.textContent = `Defeat 2 monsters in Level ${level - 1} to unlock`;
 
     lockContent.append(lockIcon, lockMessage);
     overlay.appendChild(lockContent);
