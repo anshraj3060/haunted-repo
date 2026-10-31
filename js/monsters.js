@@ -14,7 +14,10 @@ function issueToMonster(issue) {
   let name = "Unknown Spirit";
   let emoji = "🕯️";
 
-  if (has("bug", "error", "crash", "null")) {
+  if (has("merge", "conflict")) {
+    name = "Merge Conflict Demon";
+    emoji = "👹";
+  } else if (has("bug", "error", "crash", "null")) {
     name = "NullPointer Wraith";
     emoji = "👻";
   } else if (has("docs", "readme", "typo")) {
@@ -35,9 +38,6 @@ function issueToMonster(issue) {
   } else if (has("test")) {
     name = "Flaky Test Skeleton";
     emoji = "💀";
-  } else if (has("merge", "conflict")) {
-    name = "Merge Conflict Demon";
-    emoji = "👹";
   }
 
   const commentsValue = Number(issue?.comments ?? 0);

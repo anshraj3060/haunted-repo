@@ -181,6 +181,10 @@ function openFightScreen(issue) {
   }
 
   const monster = issueToMonster(issue);
+  if (!isLevelUnlocked(monster.level, currentIssues)) {
+    return;
+  }
+
   const alreadyDefeated = gameState.defeated.includes(getIssueId(issue));
   const initialHintLevel = getHintLevel(issue);
   const maxHp = 100;
@@ -702,6 +706,10 @@ document.addEventListener("click", (event) => {
   const monsterCard = event.target.closest(".monster-card");
 
   if (monsterCard) {
+    if (monsterCard.closest(".level-section.is-locked")) {
+      return;
+    }
+
     openFightScreen(findIssueForCard(monsterCard));
     return;
   }
