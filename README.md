@@ -116,7 +116,7 @@ python3 -m http.server 8000
 ```
 
 Open **http://localhost:8000** in your browser.
-    Live demo: https://haunted-repo.vercel.app
+Live demo: https://haunted-repo.vercel.app
 
 - No Ollama? The game still works with rule-based hints.
 - No internet or hit the GitHub rate limit? Click **Demo mode**.
